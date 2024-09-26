@@ -231,6 +231,7 @@ class Salesforce():
                  select_fields_by_default=None,
                  default_start_date=None,
                  default_end_date=None,
+                 is_backfill=False,
                  api_type=None):
         self.api_type = api_type.upper() if api_type else None
         self.session = requests.Session()
@@ -247,6 +248,8 @@ class Salesforce():
         self.jobs_completed = 0
         self.data_url = "{}/services/data/v60.0/{}"
         self.pk_chunking = False
+
+        self.is_backfill = is_backfill
 
         self.auth = SalesforceAuth.from_credentials(credentials, is_sandbox=self.is_sandbox)
 
