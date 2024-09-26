@@ -45,7 +45,9 @@ CONFIG = {
     'refresh_token': None,
     'client_id': None,
     'client_secret': None,
-    'start_date': None
+    'start_date': None,
+    'end_date': None,
+    'is_backfill': False,
 }
 
 FORCED_FULL_TABLE = {
