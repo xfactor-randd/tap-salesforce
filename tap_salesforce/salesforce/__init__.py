@@ -230,6 +230,7 @@ class Salesforce():
                  is_sandbox=None,
                  select_fields_by_default=None,
                  default_start_date=None,
+                 default_end_date=None,
                  api_type=None):
         self.api_type = api_type.upper() if api_type else None
         self.session = requests.Session()
@@ -256,8 +257,16 @@ class Salesforce():
             else (singer_utils.now() - timedelta(weeks=4))
         ).isoformat()
 
+        self.default_end_date = (
+            singer_utils.strptime_to_utc(default_end_date).isoformat()
+            if default_end_date
+            else None
+        )
+
         if default_start_date:
             LOGGER.info("Parsed start date '%s' from value '%s'", self.default_start_date, default_start_date)
+        if default_end_date:
+            LOGGER.info("Parsed end date '%s' from value '%s'", self.default_end_date, default_end_date)
 
     # pylint: disable=anomalous-backslash-in-string,line-too-long
     def check_rest_quota_usage(self, headers):
@@ -358,6 +367,9 @@ class Salesforce():
         return (singer.get_bookmark(state,
                                     catalog_entry['tap_stream_id'],
                                     replication_key) or self.default_start_date)
+
+    def get_end_date(self):
+        return self.default_end_date or None
 
     def _build_query_string(self, catalog_entry, start_date, end_date=None, order_by_clause=True):
         selected_properties = self._get_selected_properties(catalog_entry)
