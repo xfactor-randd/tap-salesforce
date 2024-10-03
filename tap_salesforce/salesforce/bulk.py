@@ -91,7 +91,7 @@ class Bulk():
     def _bulk_query(self, catalog_entry, state):
         job_id = self._create_job(catalog_entry)
         start_date = self.sf.get_start_date(state, catalog_entry)
-        end_date = self.sf.get_end_date()
+        end_date = self.sf.get_end_date() if self.sf.is_backfill else None
 
         batch_id = self._add_batch(catalog_entry, job_id, start_date, end_date=end_date)
 
