@@ -45,7 +45,9 @@ CONFIG = {
     'refresh_token': None,
     'client_id': None,
     'client_secret': None,
-    'start_date': None
+    'start_date': None,
+    'end_date': None,
+    'is_backfill': False,
 }
 
 FORCED_FULL_TABLE = {
@@ -510,6 +512,8 @@ def main_impl():
     args = singer_utils.parse_args(REQUIRED_CONFIG_KEYS)
     CONFIG.update(args.config)
 
+    LOGGER.info(CONFIG)
+
     credentials = parse_credentials(CONFIG)
     sf = None
     try:
@@ -520,6 +524,8 @@ def main_impl():
             is_sandbox=CONFIG.get('is_sandbox'),
             select_fields_by_default=CONFIG.get('select_fields_by_default'),
             default_start_date=CONFIG.get('start_date'),
+            default_end_date=CONFIG.get('end_date'),
+            is_backfill=CONFIG.get('is_backfill'),
             api_type=CONFIG.get('api_type'))
         sf.login()
 

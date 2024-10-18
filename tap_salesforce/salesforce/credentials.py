@@ -99,6 +99,7 @@ class SalesforceAuthOAuth(SalesforceAuth):
             self._access_token = auth['access_token']
             self._instance_url = auth['instance_url']
         except Exception as e:
+            LOGGER.info(e)
             error_message = str(e)
             if resp:
                 error_message = error_message + ", Response from Salesforce: {}".format(resp.text)

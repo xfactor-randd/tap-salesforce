@@ -15,7 +15,12 @@ class Rest():
 
     def query(self, catalog_entry, state):
         start_date = self.sf.get_start_date(state, catalog_entry)
-        query = self.sf._build_query_string(catalog_entry, start_date)
+        end_date = self.sf.get_end_date()
+        query = self.sf._build_query_string(
+            catalog_entry,
+            start_date,
+            end_date=end_date,
+        )
 
         return self._query_recur(query, catalog_entry, start_date)
 
@@ -47,7 +52,7 @@ class Rest():
 
             # If the date range was chunked (an end_date was passed), sync
             # from the end_date -> now
-            if end_date < sync_start:
+            if end_date < sync_start and not self.sf.is_backfill:
                 next_start_date_str = singer_utils.strftime(end_date)
                 query = self.sf._build_query_string(catalog_entry, next_start_date_str)
                 for record in self._query_recur(

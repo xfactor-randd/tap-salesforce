@@ -91,8 +91,9 @@ class Bulk():
     def _bulk_query(self, catalog_entry, state):
         job_id = self._create_job(catalog_entry)
         start_date = self.sf.get_start_date(state, catalog_entry)
+        end_date = self.sf.get_end_date() if self.sf.is_backfill else None
 
-        batch_id = self._add_batch(catalog_entry, job_id, start_date)
+        batch_id = self._add_batch(catalog_entry, job_id, start_date, end_date=end_date)
 
         self._close_job(job_id)
 
@@ -100,10 +101,15 @@ class Bulk():
 
         if batch_status['state'] == 'Failed':
             if "QUERY_TIMEOUT" in batch_status['stateMessage']:
-                batch_status = self._bulk_query_with_pk_chunking(catalog_entry, start_date)
+                batch_status = self._bulk_query_with_pk_chunking(
+                    catalog_entry,
+                    start_date,
+                    end_date=end_date,
+                )
                 job_id = batch_status['job_id']
 
-                # Set pk_chunking to True to indicate that we should write a bookmark differently
+                # Set pk_chunking to True to indicate that we should write a
+                # bookmark differently
                 self.sf.pk_chunking = True
 
                 # Add the bulk Job ID and its batches to the state so it can be resumed if necessary
@@ -125,13 +131,13 @@ class Bulk():
             for result in self.get_batch_results(job_id, batch_id, catalog_entry):
                 yield result
 
-    def _bulk_query_with_pk_chunking(self, catalog_entry, start_date):
+    def _bulk_query_with_pk_chunking(self, catalog_entry, start_date, end_date=None):
         LOGGER.info("Retrying Bulk Query with PK Chunking")
 
         # Create a new job
         job_id = self._create_job(catalog_entry, True)
 
-        self._add_batch(catalog_entry, job_id, start_date, False)
+        self._add_batch(catalog_entry, job_id, start_date, False, end_date=None)
 
         batch_status = self._poll_on_pk_chunked_batch_status(job_id)
         batch_status['job_id'] = job_id
@@ -173,11 +179,23 @@ class Bulk():
 
         return job['id']
 
-    def _add_batch(self, catalog_entry, job_id, start_date, order_by_clause=True):
+    def _add_batch(
+            self,
+            catalog_entry,
+            job_id,
+            start_date,
+            order_by_clause=True,
+            end_date=None,
+    ):
         endpoint = "job/{}/batch".format(job_id)
         url = self.bulk_url.format(self.sf.instance_url, endpoint)
 
-        body = self.sf._build_query_string(catalog_entry, start_date, order_by_clause=order_by_clause)
+        body = self.sf._build_query_string(
+            catalog_entry,
+            start_date,
+            end_date=end_date,
+            order_by_clause=order_by_clause,
+        )
 
         headers = self._get_bulk_headers()
         headers['Content-Type'] = 'text/csv'
