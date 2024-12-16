@@ -28,7 +28,7 @@ class Bulk2():
 
             for row in reader:
                 yield row
-        
+
 
     def _get_bulk_headers(self):
         return {**self.sf.auth.rest_headers, "Content-Type": "application/json"}
@@ -36,8 +36,14 @@ class Bulk2():
     def _create_job(self, catalog_entry, state):
         url = self.bulk_url.format(self.sf.instance_url)
         start_date = self.sf.get_start_date(state, catalog_entry)
+        end_date = self.sf.get_end_date() if self.sf.is_backfill else None
 
-        query = self.sf._build_query_string(catalog_entry, start_date, order_by_clause=False)
+        query = self.sf._build_query_string(
+            catalog_entry,
+            start_date,
+            end_date=end_date,
+            order_by_clause=False,
+        )
 
         body = {
             "operation": "query",
